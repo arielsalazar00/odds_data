@@ -1,6 +1,7 @@
 import requests 
 import json 
 import pandas as pd
+import logging
 
 class OddsAccessor:
     def __init__(self, api_key: str):
@@ -107,7 +108,12 @@ class OddsAccessor:
             f"/v4/historical/sports/{sport}/events/{event_id}/odds?apiKey={self.api_key}&regions={regions}&markets={markets}&date={date}"
         
         response = requests.get(endpoint)
-        return pd.DataFrame(response.json())
+        
+        if response.status_code != 200:
+            logging.error(f"Error fetching historical event odds for event {event_id} at {date}: {response.content}")
+        else:
+            logging.info(f"Successfully fetched historical event odds for event {event_id} at {date}")
+            return response.json()
     
 def flatten_odds_data(hist_results):
     # Initialize empty lists to store flattened data
@@ -172,3 +178,66 @@ def flatten_odds_data(hist_results):
         
     return df
     
+
+def flatten_mlb_historical_event_odds(hist_results):
+    flattened_data = []
+    
+    # Extract timestamp info
+    timestamp = hist_results['timestamp']
+    previous_timestamp = hist_results['previous_timestamp']
+    next_timestamp = hist_results['next_timestamp']
+    
+    # Extract the event data
+    event = hist_results['data']
+    event_id = event['id']
+    sport_key = event['sport_key']
+    sport_title = event['sport_title']
+    commence_time = event['commence_time']
+    home_team = event['home_team']
+    away_team = event['away_team']
+    
+    # Iterate through bookmakers
+    for bookmaker in event['bookmakers']:
+        bookmaker_key = bookmaker['key']
+        bookmaker_title = bookmaker['title']
+        bookmaker_last_update = bookmaker['last_update']
+        
+        # Iterate through markets
+        for market in bookmaker['markets']:
+            market_key = market['key']
+            market_last_update = market['last_update']
+            
+            # Iterate through outcomes
+            for outcome in market['outcomes']:
+                row = {
+                    'timestamp': timestamp,
+                    'previous_timestamp': previous_timestamp,
+                    'next_timestamp': next_timestamp,
+                    'id': event_id,
+                    'sport_key': sport_key,
+                    'sport_title': sport_title,
+                    'commence_time': commence_time,
+                    'home_team': home_team,
+                    'away_team': away_team,
+                    'bookmaker_key': bookmaker_key,
+                    'bookmaker_title': bookmaker_title,
+                    'bookmaker_last_update': bookmaker_last_update,
+                    'market_key': market_key,
+                    'market_last_update': market_last_update,
+                    'outcome_name': outcome['name'],        # 'Over' or 'Under'
+                    'player_name': outcome['description'],  # Player name is in 'description' field
+                    'price': outcome['price'],
+                    'point': outcome.get('point', None)     # Some markets don't have points
+                }
+                flattened_data.append(row)
+    
+    # Create DataFrame from flattened data
+    df = pd.DataFrame(flattened_data)
+    
+    # Convert timestamp columns to datetime
+    timestamp_cols = ['timestamp', 'previous_timestamp', 'next_timestamp', 
+                      'commence_time', 'bookmaker_last_update', 'market_last_update']
+    for col in timestamp_cols:
+        df[col] = pd.to_datetime(df[col])
+    
+    return df

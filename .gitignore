@@ -11,3 +11,12 @@ wheels/
 
 # env variables
 .env
+
+# data
+data/
+
+# logs
+logs/
+
+# notebooks
+*.ipynb
