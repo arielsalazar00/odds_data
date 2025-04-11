@@ -5,13 +5,22 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "aiohttp>=3.11.16",
+    "b2sdk>=2.8.0",
+    "common-utils",
+    "duckdb>=1.2.1",
     "ipykernel>=6.29.5",
     "mysql-connector-python>=9.2.0",
     "numpy>=2.2.3",
     "pandas>=2.2.3",
+    "polars>=1.26.0",
+    "pyarrow>=19.0.1",
     "python-dotenv>=1.0.1",
     "pytz>=2025.1",
     "requests>=2.32.3",
     "sqlalchemy>=2.0.38",
     "tqdm>=4.67.1",
 ]
+
+[tool.uv.sources]
+common-utils = { path = "../common_utils", editable = true }

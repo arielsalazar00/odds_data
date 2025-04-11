@@ -20,3 +20,11 @@ logs/
 
 # notebooks
 *.ipynb
+
+*.duckdb*
+*.wal
+*.tmp/
+
+# logs
+*.log
+*.log.*
